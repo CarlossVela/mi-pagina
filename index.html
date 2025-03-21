@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Establece la codificación de caracteres a UTF-8 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Configura la vista para que sea responsive -->
+    <title>MobileNet</title>
+    <!-- Título de la página -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <!-- Incluye la biblioteca TensorFlow.js desde un CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+    <!-- Incluye el modelo MobileNet desde un CDN -->
+</head>
+<body>
+    <h1>Bienvenido a MobileNet</h1>
+    <!-- Encabezado principal de la página -->
+    
+    <video id="video" width="600" height="400" autoplay playsinline></video>
+    <!-- Elemento de video para capturar imágenes en tiempo real -->
+    
+    <div id="result"></div>
+    <!-- Contenedor para mostrar los resultados del modelo MobileNet -->
+    
+    <script>
+        // Código JavaScript para cargar el modelo MobileNet y procesar el video
+        async function app() {
+            const video = document.getElementById('video');
+            const resultContainer = document.getElementById('result');
+            
+            // Solicitar acceso a la cámara trasera
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            facingMode: { exact: "environment" } // Solicita la cámara trasera
+                        }
+                    });
+                    video.srcObject = stream;
+                } catch (error) {
+                    console.error('Error al acceder a la cámara trasera:', error);
+                }
+            } else {
+                console.error('getUserMedia no es compatible con este navegador.');
+            }
+            
+            // Cargar el modelo MobileNet
+            const net = await mobilenet.load();
+            
+            // Procesar el video en tiempo real
+            video.addEventListener('loadeddata', async () => {
+                while (true) {
+                    const result = await net.classify(video);
+                    resultContainer.innerHTML = `
+                        <p>Predicción: ${result[0].className}</p>
+                        <p>Probabilidad: ${(result[0].probability * 100).toFixed(2)}%</p>
+                    `;
+                    await tf.nextFrame();
+                }
+            });
+        }
+        
+        app();
+    </script>
+</body>
+</html>
